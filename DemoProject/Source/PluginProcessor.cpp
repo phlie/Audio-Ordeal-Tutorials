@@ -22,6 +22,7 @@ DemoProjectAudioProcessor::DemoProjectAudioProcessor()
                        )
 #endif
 {
+    addParameter(gain = new juce::AudioParameterFloat("GAIN", "Gain", 0.0f, 1.0f, 0.0f));
 }
 
 DemoProjectAudioProcessor::~DemoProjectAudioProcessor()
@@ -131,30 +132,25 @@ bool DemoProjectAudioProcessor::isBusesLayoutSupported (const BusesLayout& layou
 
 void DemoProjectAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    juce::ScopedNoDenormals noDenormals;
-    auto totalNumInputChannels  = getTotalNumInputChannels();
-    auto totalNumOutputChannels = getTotalNumOutputChannels();
+    auto* channelDataL = buffer.getWritePointer(0);
+    auto* channelDataR = buffer.getWritePointer(1);
 
-    // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // This is here to avoid people getting screaming feedback
-    // when they first compile a plugin, but obviously you don't need to keep
-    // this code if your algorithm always overwrites all the output channels.
-    for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear (i, 0, buffer.getNumSamples());
-
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
+    for (int i = 0; i < buffer.getNumSamples(); ++i)
     {
-        auto* channelData = buffer.getWritePointer (channel);
+        // Set the variable ipnut as one sample data that will change with each iteration of the loop.
+        auto inputL = channelDataL[i];
+        auto inputR = channelDataR[i];
+        
+        // Mute this channel of data
+        //inputL = inputL * 0.0f;
 
-        // ..do something to the data...
+        // Get the value of the gain parameter and multiply it by the current sample
+        inputL = inputL * gain->get();
+        inputR = inputR * gain->get();
+
+        // Write the input back into the channelData
+        channelDataL[i] = inputL;
+        channelDataR[i] = inputR;
     }
 }
 
@@ -166,7 +162,10 @@ bool DemoProjectAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* DemoProjectAudioProcessor::createEditor()
 {
-    return new DemoProjectAudioProcessorEditor (*this);
+    //return new DemoProjectAudioProcessorEditor (*this);
+
+    // Use the generic UI supplied with JUCE
+    return new juce::GenericAudioProcessorEditor(this);
 }
 
 //==============================================================================
