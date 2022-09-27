@@ -20,6 +20,9 @@ DistortionAOAudioProcessorEditor::DistortionAOAudioProcessorEditor (DistortionAO
     
     // Set the default choice as 1, Hard Clip.
     disChoice.setSelectedId(1);
+
+    // Forgot to add it to a listener so the choices weren't being chosen.
+    disChoice.addListener(this);
     addAndMakeVisible(disChoice);
 
     // Set up the threshold slider
